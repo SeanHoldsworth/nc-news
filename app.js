@@ -5,17 +5,20 @@ const { getApi } = require('./controllers/api.controllers');
 
 const { getTopics } = require('./controllers/topics.controllers');
 
+const { getArticleById } = require('./controllers/articles.controllers');
+
 //app.use(express.json());
 
 app.get('/api', getApi);
 
 app.get('/api/topics', getTopics);
 
+app.get('/api/articles/:article_id', getArticleById);
+
 app.all('*', (request, response, next) => {
   response.status(404).send({ msg: 'Endpoint not found' });
 })
 
-/* Commented out until needed...
 // Handle application errors.
 
 app.use((err, request, response, next) => {
@@ -25,6 +28,7 @@ app.use((err, request, response, next) => {
     next(err);
 });
 
+/* Commented out until needed...
 // Handle PostgreSQL errors.
 
 app.use((err, request, response, next) => {
