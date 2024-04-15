@@ -7,9 +7,16 @@ intentionally added to the .gitignore file. These are *.env.test* and
  databases used to hold test and development data respectively. They must
  agree with the names of the databases as found in file db/setup.sql.
 
-.env.test:
+.env.test:  
 PGDATABASE=\<database\>.test
 
-.env.development:
+.env.development:  
 PGDATABASE=\<database\>
 
+To then initialize the databases with provided seed data, run the following
+commands. You may need to run 'npm init -y' first if npm has not already been
+set up.
+
+• npm run setup-dbs
+
+• npm run seed
