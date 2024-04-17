@@ -10,7 +10,8 @@ const { addCommentToArticle } = require('./controllers/comment.controllers');
 const {
   getArticleById,
   getArticles,
-  getArticleCommentsById
+  getArticleCommentsById,
+  patchArticleById
 } = require('./controllers/articles.controllers');
 
 app.use(express.json());
@@ -19,9 +20,11 @@ app.get('/api', getApi);
 
 app.get('/api/topics', getTopics);
 
+app.get('/api/articles', getArticles);
+
 app.get('/api/articles/:article_id', getArticleById);
 
-app.get('/api/articles', getArticles);
+app.patch('/api/articles/:article_id', patchArticleById);
 
 app.get('/api/articles/:article_id/comments', getArticleCommentsById);
 
@@ -44,8 +47,7 @@ app.use((err, request, response, next) => {
 
 app.use((err, request, response, next) => {
   switch(err.code) {
-    case '22P02':
-    case '23503':
+    case '22P02': // Invalid article_id
       response.status(400).send({ msg: "Bad request" });
       break;
     

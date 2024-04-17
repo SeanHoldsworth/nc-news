@@ -86,9 +86,80 @@ describe("NC News", () => {
         });
     });
 
-    test('GET 400: Responds with status 400 when specified id is invalid.', () => {
+    test('GET 400: Responds with status 400 when the article id is invalid.', () => {
       return request(app)
         .get('/api/articles/not-a-number')
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('PATCH 200: Updates the votes associated with a specified article and returns the article.', () => {
+      return request(app)
+        .patch('/api/articles/1')
+        .send({
+          incVotes: 42
+        })
+        .expect(200)
+        .then(({ body: { article } }) => {
+          expect(article.votes).toBe(142);
+        });
+    });
+
+    test('PATCH 404: Responds with 404 when there is no article with the specified id.', () => {
+      return request(app)
+        .patch('/api/articles/999')
+        .send({
+          incVotes: 42
+        })
+        .expect(404)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("No such article");
+        });
+    });
+
+    test('PATCH 400: Responds with 400 when the article_id is invalid.', () => {
+      return request(app)
+        .patch('/api/articles/not-a-number')
+        .send({
+          incVotes: 42
+        })
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('PATCH 400: Responds with 400 when the incVotes key is missing.', () => {
+      return request(app)
+        .patch('/api/articles/1')
+        .send({})
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('PATCH 400: Responds with 400 when the incVotes value is invalid.', () => {
+      return request(app)
+        .patch('/api/articles/1')
+        .send({
+          incVotes: "not-a-number"
+        })
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('PATCH 400: Responds with 400 when the patch data has extra keys.', () => {
+      return request(app)
+        .patch('/api/articles/1')
+        .send({
+          incVotes: 42,
+          colour: "institution green"
+        })
         .expect(400)
         .then(({ body: { msg } }) => {
           expect(msg).toBe("Bad request");
@@ -206,6 +277,19 @@ describe("NC News", () => {
         .expect(404)
         .then(({ body: { msg } }) => {
           expect(msg).toBe("No such article");
+        });
+    });
+
+    test('POST 400: Responds with status 400 when article_id is invalid.', () => {
+      return request(app)
+        .post('/api/articles/not-a-number/comments')
+        .send({
+          username: 'lurker',
+          body: 'Buy stuff at https://dodgy-site.com'
+        })
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
         });
     });
 
