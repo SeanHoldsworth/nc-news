@@ -72,5 +72,3 @@ app.use((err, request, response, next) => {
 });
 
 module.exports = app;
-
-// CHECK THAT I CAN WORK ON MAIN WITHOUT CAUSING PROBLEMS WITH GIT.
