@@ -1,5 +1,5 @@
-const { insertComment } = require('../models/comments.models');
-const { checkArticleExists, checkUsernameExists } = require('../db/utils');
+const { insertComment, deleteComment } = require('../models/comments.models');
+const { checkArticleExists, checkUsernameExists, checkCommentExists } = require('../db/utils');
 
 // Here it is necessary to check for the existence of both the article_id and the username
 // of the comment in the database. These checks must be carried out before it is safe to
@@ -7,9 +7,7 @@ const { checkArticleExists, checkUsernameExists } = require('../db/utils');
 // exist then the DB will be very unhappy.
 
 // This means the two Promises carrying out these checks must complete before the insertion
-// of the new comment can be attempted. This is the cleanest way I can think of doing this
-// but I *really* do not like the need to wrap insertComment in an anonymous function just
-// to have it called. Surely there must be a cleaner way of doing this?
+// of the new comment can be attempted.
 
 exports.addCommentToArticle = (req, res, next) => {
   const { article_id } = req.params;
@@ -30,12 +28,21 @@ exports.addCommentToArticle = (req, res, next) => {
   comment.article_id = article_id;
 
   Promise.all([checkArticleExists(article_id), checkUsernameExists(comment.username)])
-    .then(() => {                   // This is HORRIBLE! Is there a cleaner way of doing this?
-      insertComment(comment)
-        .then((comment) => {
-          res.status(201).send({ comment });
-        })
-        .catch(next);               // Also, why is this needed when there is a catch below it?
+    .then(() => {
+      return insertComment(comment)
+    })
+    .then((comment) => {
+      res.status(201).send({ comment });
     })
     .catch(next);
 };
+
+exports.removeComment = (req, res, next) => {
+  const { comment_id } = req.params;
+
+  deleteComment(comment_id)
+  .then(() => {
+    res.status(204).send();
+  })
+  .catch(next);
+}

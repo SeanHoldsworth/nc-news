@@ -4,6 +4,7 @@ const {
    selectArticleById,
    selectArticles,
    selectArticleCommentsById,
+   updateArticleById,
 } = require('../models/articles.models');
 
 exports.getArticleById = (req, res, next) => {
@@ -31,6 +32,28 @@ exports.getArticleCommentsById = (req, res, next) => {
     [selectArticleCommentsById(article_id), checkArticleExists(article_id)])
     .then(([comments]) => {
       res.status(200).send({ comments });
+    })
+    .catch(next);
+};
+
+exports.patchArticleById = (req, res, next) => {
+  const { article_id } = req.params;
+  const patch = req.body;
+  let isValidPatch = true;
+
+  if (!patch.incVotes || typeof patch.incVotes !== 'number')
+    isValidPatch = false;
+  else
+    isValidPatch = Object.keys(patch).length === 1;
+
+  if (!isValidPatch) {
+    res.status(400).send({ msg: "Bad request" });
+    return;
+  }
+
+  updateArticleById(article_id, patch.incVotes)
+    .then ((article) => {
+      res.status(200).send({ article });
     })
     .catch(next);
 };
