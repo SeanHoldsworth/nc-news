@@ -43,9 +43,46 @@
         }
     }
   },
+  "PATCH /api/articles/:article_id": {
+    "description": "Increments a specified article's votes by a number specified in patch data",
+    "patchData": {
+      "incVotes": 1
+    },
+    "exampleResponse": {
+      "article": 
+        {
+          "article_id": 1,
+          "title": "Seafood substitutions are increasing",
+          "topic": "cooking",
+          "author": "weegembump",
+          "body": "Text from the article..",
+          "created_at": "2018-05-30T15:59:13.341Z",
+          "votes": 1
+        }
+    }
+  },
   "GET /api/articles/:article_id/comments": {
     "description": "serves a list of comments on an article sorted newest comments first.",
     "queries": ["author", "topic", "sort_by", "order"],
+    "exampleResponse": {
+      "comments": [
+        {
+          "comment_id": 2,
+          "author": "butter bridge",
+          "body": "Text from the comment..",
+          "votes": 14,
+          "created_at": "2018-05-30T15:59:13.341Z",
+          "article_id": 1
+        }
+      ]
+    }
+  },
+  "POST /api/articles/:article_id/comments": {
+    "description": "adds a new comment to an article with the given article_id.",
+    "exampleComment": {
+      "username": "butter bridge",
+      "body": "Text from the comment.."
+    },
     "exampleResponse": {
       "comments": [
         {

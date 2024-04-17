@@ -72,14 +72,8 @@ describe("NC News", () => {
 
           // Expect the article to have the expected set of properties and no others.
 
-          const expected_properties =
-            ['title', 'author', 'article_id', 'topic', 'created_at', 'votes', 'article_img_url', 'body'];
-
-          expect(Object.keys(article).length).toBe(expected_properties.length);
-
-          expected_properties.forEach(property => {
-            expect(article).toHaveProperty(property);
-          });
+          expect(article).toContainAllKeys(
+            ['title', 'author', 'article_id', 'topic', 'created_at', 'votes', 'article_img_url', 'body']);
         });
     });
 
@@ -92,9 +86,80 @@ describe("NC News", () => {
         });
     });
 
-    test('GET 400: Responds with status 400 when specified id is invalid.', () => {
+    test('GET 400: Responds with status 400 when the article id is invalid.', () => {
       return request(app)
         .get('/api/articles/not-a-number')
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('PATCH 200: Updates the votes associated with a specified article and returns the article.', () => {
+      return request(app)
+        .patch('/api/articles/1')
+        .send({
+          incVotes: 42
+        })
+        .expect(200)
+        .then(({ body: { article } }) => {
+          expect(article.votes).toBe(142);
+        });
+    });
+
+    test('PATCH 404: Responds with 404 when there is no article with the specified id.', () => {
+      return request(app)
+        .patch('/api/articles/999')
+        .send({
+          incVotes: 42
+        })
+        .expect(404)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("No such article");
+        });
+    });
+
+    test('PATCH 400: Responds with 400 when the article_id is invalid.', () => {
+      return request(app)
+        .patch('/api/articles/not-a-number')
+        .send({
+          incVotes: 42
+        })
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('PATCH 400: Responds with 400 when the incVotes key is missing.', () => {
+      return request(app)
+        .patch('/api/articles/1')
+        .send({})
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('PATCH 400: Responds with 400 when the incVotes value is invalid.', () => {
+      return request(app)
+        .patch('/api/articles/1')
+        .send({
+          incVotes: "not-a-number"
+        })
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('PATCH 400: Responds with 400 when the patch data has extra keys.', () => {
+      return request(app)
+        .patch('/api/articles/1')
+        .send({
+          incVotes: 42,
+          colour: "institution green"
+        })
         .expect(400)
         .then(({ body: { msg } }) => {
           expect(msg).toBe("Bad request");
@@ -111,21 +176,14 @@ describe("NC News", () => {
         expect(articles).toHaveLength(13);
         expect(articles).toBeSortedBy('created_at', { descending: true });
 
-        // Expect the article objects to have the expected set of properties and no others.
-
-        const expected_properties =
-          ['title', 'article_id', 'author', 'topic', 'created_at', 'votes', 'article_img_url', 'comment_count'];
-
         const comment_counts = [ -1, 11, 0, 2, 0, 2, 1, 0, 0, 2, 0, 0, 0, 0 ];
 
         articles.forEach(article => {
+          // Expect the article objects to have the expected set of properties and no others.
+          expect(article).toContainAllKeys(
+            ['title', 'article_id', 'author', 'topic', 'created_at', 'votes', 'article_img_url', 'comment_count']);
+
           expect(article.comment_count).toBe(comment_counts[article.article_id]);
-
-          expect(Object.keys(article).length).toBe(expected_properties.length);
-
-          expected_properties.forEach(property => {
-            expect(article).toHaveProperty(property);
-          });
         });
       });
     });
@@ -184,6 +242,90 @@ describe("NC News", () => {
     test('GET 400: Responds with status 400 when specified id is invalid.', () => {
       return request(app)
         .get('/api/articles/not-a-number/comments')
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('POST 201: Responds with status 201 and new comment when comment successfully added.', () => {
+      return request(app)
+        .post('/api/articles/2/comments')
+        .send({
+          username: 'lurker',
+          body: 'Buy stuff at https://dodgy-site.com'
+        })
+        .expect(201)
+        .then(({ body: { comment } }) => {
+          expect(comment).toMatchObject({
+            comment_id: 19,
+            author: 'lurker',
+            body: 'Buy stuff at https://dodgy-site.com',
+            article_id: 2,
+            votes: 0
+          });
+        });
+    });
+
+    test('POST 404: Responds with status 404 when referenced article does not exist.', () => {
+      return request(app)
+        .post('/api/articles/999/comments')
+        .send({
+          username: 'lurker',
+          body: 'Buy stuff at https://dodgy-site.com'
+        })
+        .expect(404)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("No such article");
+        });
+    });
+
+    test('POST 400: Responds with status 400 when article_id is invalid.', () => {
+      return request(app)
+        .post('/api/articles/not-a-number/comments')
+        .send({
+          username: 'lurker',
+          body: 'Buy stuff at https://dodgy-site.com'
+        })
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('POST 404: Responds with status 404 when username does not exist in users table.', () => {
+      return request(app)
+        .post('/api/articles/2/comments')
+        .send({
+          username: 'Honest Ron',
+          body: 'Buy stuff at https://dodgy-site.com'
+        })
+        .expect(404)
+        .then(({ body: { msg } }) => {
+          //expect(msg).toBe("Bad request");
+          expect(msg).toBe("No such user");
+        });
+    });
+
+    test('POST 400: Responds with status 400 when body is missing.', () => {
+      return request(app)
+        .post('/api/articles/2/comments')
+        .send({
+          username: 'lurker',
+        })
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('POST 400: Responds with status 400 when comment contains unexpected properties.', () => {
+      return request(app)
+        .post('/api/articles/2/comments')
+        .send({
+          username: 'lurker',
+          colour: 'purple'
+        })
         .expect(400)
         .then(({ body: { msg } }) => {
           expect(msg).toBe("Bad request");

@@ -5,19 +5,30 @@ const { getApi } = require('./controllers/api.controllers');
 
 const { getTopics } = require('./controllers/topics.controllers');
 
-const { getArticleById, getArticles, getArticleCommentsById } = require('./controllers/articles.controllers');
+const { addCommentToArticle } = require('./controllers/comment.controllers');
 
-//app.use(express.json());
+const {
+  getArticleById,
+  getArticles,
+  getArticleCommentsById,
+  patchArticleById
+} = require('./controllers/articles.controllers');
+
+app.use(express.json());
 
 app.get('/api', getApi);
 
 app.get('/api/topics', getTopics);
 
-app.get('/api/articles/:article_id', getArticleById);
-
 app.get('/api/articles', getArticles);
 
+app.get('/api/articles/:article_id', getArticleById);
+
+app.patch('/api/articles/:article_id', patchArticleById);
+
 app.get('/api/articles/:article_id/comments', getArticleCommentsById);
+
+app.post('/api/articles/:article_id/comments', addCommentToArticle);
 
 app.all('*', (request, response, next) => {
   response.status(404).send({ msg: 'Endpoint not found' });
@@ -36,7 +47,7 @@ app.use((err, request, response, next) => {
 
 app.use((err, request, response, next) => {
   switch(err.code) {
-    case '22P02':
+    case '22P02': // Invalid article_id
       response.status(400).send({ msg: "Bad request" });
       break;
     
