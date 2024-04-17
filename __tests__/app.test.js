@@ -170,21 +170,40 @@ describe("NC News", () => {
   describe('/api/articles', () => {
     test('GET 200: Responds with an object containing a list of articles.', () => {
       return request(app)
-      .get('/api/articles')
-      .expect(200)
-      .then(({ body: { articles } }) => {
-        expect(articles).toHaveLength(13);
-        expect(articles).toBeSortedBy('created_at', { descending: true });
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body: { articles } }) => {
+          expect(articles).toHaveLength(13);
+          expect(articles).toBeSortedBy('created_at', { descending: true });
 
-        const comment_counts = [ -1, 11, 0, 2, 0, 2, 1, 0, 0, 2, 0, 0, 0, 0 ];
+          const comment_counts = [ -1, 11, 0, 2, 0, 2, 1, 0, 0, 2, 0, 0, 0, 0 ];
 
-        articles.forEach(article => {
-          // Expect the article objects to have the expected set of properties and no others.
-          expect(article).toContainAllKeys(
-            ['title', 'article_id', 'author', 'topic', 'created_at', 'votes', 'article_img_url', 'comment_count']);
+          articles.forEach(article => {
+            // Expect the article objects to have the expected set of properties and no others.
+            expect(article).toContainAllKeys(
+              ['title', 'article_id', 'author', 'topic', 'created_at', 'votes', 'article_img_url', 'comment_count']);
 
-          expect(article.comment_count).toBe(comment_counts[article.article_id]);
+            expect(article.comment_count).toBe(comment_counts[article.article_id]);
+          });
         });
+    });
+
+    test('GET 200: When given a topic that exists, return all articles with that topic.', () => {
+      return request(app)
+        .get('/api/articles?topic=cats')
+        .expect(200)
+        .then(({ body: { articles } }) => {
+          expect(articles).toHaveLength(1);
+          expect(articles[0].topic).toBe('cats');
+        });
+    });
+
+    test("GET 200: When given a topic that doesn't exist, return an empty list.", () => {
+      return request(app)
+        .get('/api/articles?topic=dogs')
+        .expect(200)
+        .then(({ body: { articles } }) => {
+          expect(articles).toHaveLength(0);
       });
     });
   });
@@ -192,42 +211,42 @@ describe("NC News", () => {
   describe('/api/articles/:article_id/comments', () => {
     test('GET 200: Responds with a list of the comments associated with the specified article, most recent first.', () => {
       return request(app)
-      .get('/api/articles/1/comments')
-      .expect(200)
-      .then(({ body: { comments } }) => {
-        expect(comments).toHaveLength(11);
-        expect(comments).toBeSortedBy('created_at', { descending: true });
+        .get('/api/articles/1/comments')
+        .expect(200)
+        .then(({ body: { comments } }) => {
+          expect(comments).toHaveLength(11);
+          expect(comments).toBeSortedBy('created_at', { descending: true });
 
-        // Expect the comment objects to have the expected set of properties and no others.
+          // Expect the comment objects to have the expected set of properties and no others.
 
-        const expected_properties =
-          ['comment_id', 'body', 'article_id', 'author', 'created_at', 'votes'];
+          const expected_properties =
+            ['comment_id', 'body', 'article_id', 'author', 'created_at', 'votes'];
 
-        comments.forEach(comment => {
-          // All comments should have an article_id of 1.
-          expect(comment.article_id).toBe(1);
+          comments.forEach(comment => {
+            // All comments should have an article_id of 1.
+            expect(comment.article_id).toBe(1);
 
-          expect(Object.keys(comment).length).toBe(expected_properties.length);
+            expect(Object.keys(comment).length).toBe(expected_properties.length);
 
-          expected_properties.forEach(property => {
-            expect(comment).toHaveProperty(property);
+            expected_properties.forEach(property => {
+              expect(comment).toHaveProperty(property);
+            });
+
+            if (comment.comment_id === 2) {
+              expect(comment.author).toBe('butter_bridge');
+              expect(comment.votes).toBe(14);
+            }
           });
-
-          if (comment.comment_id === 2) {
-            expect(comment.author).toBe('butter_bridge');
-            expect(comment.votes).toBe(14);
-          }
         });
-      });
     });
     
     test('GET 200: Responds with an empty comment list for an article with no comments.', () => {
       return request(app)
-      .get('/api/articles/2/comments')
-      .expect(200)
-      .then(({ body: { comments } }) => {
-        expect(comments).toHaveLength(0);
-      });
+        .get('/api/articles/2/comments')
+        .expect(200)
+        .then(({ body: { comments } }) => {
+          expect(comments).toHaveLength(0);
+        });
     });
 
     test('GET 404: Responds with status 404 when there is no article with specified id.', () => {
