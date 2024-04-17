@@ -1,12 +1,22 @@
 const db = require('../db/connection');
 
-exports.selectArticles = () => {
+exports.selectArticles = (topic) => {
+  let queryString = `
+    SELECT a.author, title, article_id, topic, a.created_at, a.votes,
+      article_img_url, count(c.article_id)::INTEGER comment_count
+    FROM articles a LEFT JOIN comments c USING (article_id) `;
+
+  const queryParams = [];
+
+  if (topic) {
+    queryString += 'WHERE topic = $1 ';
+    queryParams.push(topic);
+  }
+
+  queryString += 'GROUP BY article_id ORDER BY a.created_at DESC;';
+
   return db
-    .query(`
-      SELECT a.author, title, article_id, topic, a.created_at, a.votes,
-        article_img_url, count(c.article_id)::INTEGER comment_count
-      FROM articles a LEFT JOIN comments c USING (article_id)
-      GROUP BY article_id ORDER BY a.created_at DESC;`)
+    .query(queryString, queryParams)
     .then(({ rows: articles }) => {
       return articles;
     });
