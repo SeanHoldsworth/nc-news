@@ -279,7 +279,7 @@ describe("NC News", () => {
           expect(msg).toBe("No such article");
         });
     });
-
+    
     test('POST 400: Responds with status 400 when article_id is invalid.', () => {
       return request(app)
         .post('/api/articles/not-a-number/comments')

@@ -39,6 +39,3 @@ exports.addCommentToArticle = (req, res, next) => {
     })
     .catch(next);
 };
-
-exports.updateArticle = (req, res, next) => {
-};
