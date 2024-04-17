@@ -1,8 +1,9 @@
+const { checkArticleExists } = require('../db/utils');
+
 const {
    selectArticleById,
    selectArticles,
    selectArticleCommentsById,
-   checkArticleExists
 } = require('../models/articles.models');
 
 exports.getArticleById = (req, res, next) => {
