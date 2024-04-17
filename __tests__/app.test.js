@@ -73,7 +73,10 @@ describe("NC News", () => {
           // Expect the article to have the expected set of properties and no others.
 
           expect(article).toContainAllKeys(
-            ['title', 'author', 'article_id', 'topic', 'created_at', 'votes', 'article_img_url', 'body']);
+            ['title', 'author', 'article_id', 'topic', 'created_at',
+                'votes', 'article_img_url', 'body', 'comment_count']);
+
+          expect(article.comment_count).toBe(11);
         });
     });
 

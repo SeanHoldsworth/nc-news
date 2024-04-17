@@ -23,9 +23,13 @@ exports.selectArticles = (topic) => {
 };
 
 exports.selectArticleById = (article_id) => {
+    // SELECT * FROM articles WHERE article_id = $1;`, [article_id])
   return db
     .query(`
-      SELECT * FROM articles WHERE article_id = $1;`, [article_id])
+      SELECT a.*, count(c.article_id)::INTEGER comment_count
+      FROM articles a LEFT JOIN comments c USING (article_id)
+      WHERE article_id = $1
+      GROUP BY article_id ORDER BY a.created_at DESC;`, [article_id])
     .then(({ rows: [article] }) => {
         if (article) 
           return article;
