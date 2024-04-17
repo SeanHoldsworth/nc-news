@@ -302,7 +302,6 @@ describe("NC News", () => {
         })
         .expect(404)
         .then(({ body: { msg } }) => {
-          //expect(msg).toBe("Bad request");
           expect(msg).toBe("No such user");
         });
     });
@@ -372,6 +371,25 @@ describe("NC News", () => {
         .expect(400)
         .then(({ body: { msg } }) => {
           expect(msg).toBe("Bad request");
+        });
+    });
+  });
+
+  describe('/api/users', () => {
+    test('GET 200: Responds with an object containing a list of users.', () => {
+      return request(app)
+        .get('/api/users')
+        .expect(200)
+        .then(({ body: { users } }) => {
+          expect(users).toHaveLength(4);
+
+          users.forEach(user => {
+            expect(user).toContainAllKeys(['username', 'name', 'avatar_url']);
+
+            expect(typeof user.username).toBe('string');
+            expect(typeof user.name).toBe('string');
+            expect(typeof user.avatar_url).toBe('string');
+          });
         });
     });
   });
