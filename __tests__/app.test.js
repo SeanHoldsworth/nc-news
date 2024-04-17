@@ -332,4 +332,47 @@ describe("NC News", () => {
         });
     });
   });
+
+  describe('/api/comments/:comment_id', () => {
+    test('DELETE 204: Successfully deletes a comment.', () => {
+      return request(app)
+        // Comment 2 is a comment on article 1.
+        .get('/api/articles/1/comments')
+        .expect(200)
+        .then(({ body: { comments } }) => {
+          expect(comments).toHaveLength(11);  // Should always be the case, but belt and braces...
+        })
+        .then(() => {
+          return request(app)
+            .delete('/api/comments/2')
+            .expect(204)
+        })
+        .then(() => {
+          return request(app)
+            .get('/api/articles/1/comments')
+            .expect(200)
+        })
+        .then(({ body: { comments } }) => {
+          expect(comments).toHaveLength(10);
+        })
+    });
+
+    test('DELETE 404: Responds with status 404 when referenced comment does not exist.', () => {
+      return request(app)
+        .delete('/api/comments/999')
+        .expect(404)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("No such comment");
+        });
+    });
+
+    test('DELETE 400: Responds with status 400 when comment_id is invalid.', () => {
+      return request(app)
+        .delete('/api/comments/not-a-number')
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+  });
 });

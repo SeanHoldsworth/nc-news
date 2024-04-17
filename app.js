@@ -5,7 +5,7 @@ const { getApi } = require('./controllers/api.controllers');
 
 const { getTopics } = require('./controllers/topics.controllers');
 
-const { addCommentToArticle } = require('./controllers/comment.controllers');
+const { addCommentToArticle, removeComment } = require('./controllers/comment.controllers');
 
 const {
   getArticleById,
@@ -30,6 +30,8 @@ app.get('/api/articles/:article_id/comments', getArticleCommentsById);
 
 app.post('/api/articles/:article_id/comments', addCommentToArticle);
 
+app.delete('/api/comments/:comment_id', removeComment);
+
 app.all('*', (request, response, next) => {
   response.status(404).send({ msg: 'Endpoint not found' });
 })
@@ -47,7 +49,7 @@ app.use((err, request, response, next) => {
 
 app.use((err, request, response, next) => {
   switch(err.code) {
-    case '22P02': // Invalid article_id
+    case '22P02':
       response.status(400).send({ msg: "Bad request" });
       break;
     
