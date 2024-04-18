@@ -23,7 +23,6 @@ exports.selectArticles = (topic) => {
 };
 
 exports.selectArticleById = (article_id) => {
-    // SELECT * FROM articles WHERE article_id = $1;`, [article_id])
   return db
     .query(`
       SELECT a.*, count(c.article_id)::INTEGER comment_count

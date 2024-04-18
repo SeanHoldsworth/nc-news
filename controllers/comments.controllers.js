@@ -9,7 +9,7 @@ const { checkArticleExists, checkUsernameExists, checkCommentExists } = require(
 // This means the two Promises carrying out these checks must complete before the insertion
 // of the new comment can be attempted.
 
-exports.addCommentToArticle = (req, res, next) => {
+exports.addCommentToArticle = async (req, res, next) => {
   const { article_id } = req.params;
   const comment = req.body;
   let validComment = true;
@@ -26,7 +26,7 @@ exports.addCommentToArticle = (req, res, next) => {
   }
 
   comment.article_id = article_id;
-
+  
   Promise.all([checkArticleExists(article_id), checkUsernameExists(comment.username)])
     .then(() => {
       return insertComment(comment)
