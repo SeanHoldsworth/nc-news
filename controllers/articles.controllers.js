@@ -18,11 +18,14 @@ exports.getArticleById = (req, res, next) => {
 };
 
 exports.getArticles = (req, res, next) => {
-  const { topic } = req.query;
+  const { sort_by, order, topic } = req.query;
 
-  selectArticles(topic)
+  selectArticles(sort_by, order, topic)
   .then((articles) => {
+    if (articles.length > 0)
       res.status(200).send({ articles });
+    else
+      res.status(404).send({ msg: "Topic not found" });
   })
   .catch(next);
 };
