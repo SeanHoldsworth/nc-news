@@ -1,10 +1,16 @@
 const db = require('../db/connection');
+const format = require('pg-format');
 
-exports.selectArticles = (topic) => {
+exports.selectArticles = (sort_by='created_at', order='DESC', topic) => {
   let queryString = `
     SELECT a.author, title, article_id, topic, a.created_at, a.votes,
       article_img_url, count(c.article_id)::INTEGER comment_count
     FROM articles a LEFT JOIN comments c USING (article_id) `;
+
+    order = order.toUpperCase();
+
+    if (order != 'ASC' && order != 'DESC')
+      return Promise.reject({ status: 400, msg: "Invalid sort order" });
 
   const queryParams = [];
 
@@ -13,10 +19,10 @@ exports.selectArticles = (topic) => {
     queryParams.push(topic);
   }
 
-  queryString += 'GROUP BY article_id ORDER BY a.created_at DESC;';
+  queryString += `GROUP BY article_id ORDER BY a.%I %s;`;
 
   return db
-    .query(queryString, queryParams)
+    .query(format(queryString, sort_by, order), queryParams)
     .then(({ rows: articles }) => {
       return articles;
     });

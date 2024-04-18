@@ -54,6 +54,7 @@ app.use((err, request, response, next) => {
 app.use((err, request, response, next) => {
   switch(err.code) {
     case '22P02':
+    case '42703':
       response.status(400).send({ msg: "Bad request" });
       break;
     

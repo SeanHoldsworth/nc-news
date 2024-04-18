@@ -66,17 +66,23 @@ describe("NC News", () => {
           expect(article.topic).toBe('mitch');
           expect(article.body).toBe('I find this existence challenging');
           expect(article.votes).toBe(100);
+          expect(article.comment_count).toBe(11);
 
           expect(typeof article.created_at).toBe('string');
           expect(typeof article.article_img_url).toBe('string');
+        });
+    });
 
+    test('GET 200: Check that the returned article object is correctly formed.', () => {
+      return request(app)
+        .get('/api/articles/1')
+        .expect(200)
+        .then(({ body: { article } }) => {
           // Expect the article to have the expected set of properties and no others.
 
           expect(article).toContainAllKeys(
             ['title', 'author', 'article_id', 'topic', 'created_at',
                 'votes', 'article_img_url', 'body', 'comment_count']);
-
-          expect(article.comment_count).toBe(11);
         });
     });
 
@@ -191,6 +197,42 @@ describe("NC News", () => {
         });
     });
 
+    test('GET 200: By default all articles are sorted newest first.', () => {
+      return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body: { articles } }) => {
+          expect(articles).toBeSortedBy('created_at', { descending: true });
+        });
+    });
+
+    test('GET 200: Articles can be sorted on any column in either sort order.', () => {
+      return request(app)
+        .get('/api/articles?sort_by=author&order=asc')
+        .expect(200)
+        .then(({ body: { articles } }) => {
+          expect(articles).toBeSortedBy('author');
+        });
+    });
+
+    test('GET 400: Respond with status 400 if passed an invalid sort order.', () => {
+      return request(app)
+        .get('/api/articles?sort_by=author&order=new')
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Invalid sort order");
+        });
+    });
+
+    test('GET 400: Respond with status 400 if passed an invalid sort_by parameter.', () => {
+      return request(app)
+        .get('/api/articles?sort_by=no_such_column')
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
     test('GET 200: When given a topic that exists, return all articles with that topic.', () => {
       return request(app)
         .get('/api/articles?topic=cats')
@@ -201,13 +243,13 @@ describe("NC News", () => {
         });
     });
 
-    test("GET 200: When given a topic that doesn't exist, return an empty list.", () => {
+    test("GET 404: When given a topic that doesn't exist return 404 status.", () => {
       return request(app)
         .get('/api/articles?topic=dogs')
-        .expect(200)
-        .then(({ body: { articles } }) => {
-          expect(articles).toHaveLength(0);
-      });
+        .expect(404)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Topic not found");
+        });
     });
   });
 
