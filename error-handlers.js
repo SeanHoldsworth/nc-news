@@ -13,6 +13,7 @@ exports.databaseErrorHandler = (err, request, response, next) => {
   switch(err.code) {
     case '22P02':
     case '42703':
+    case '23505':
       response.status(400).send({ msg: "Bad request" });
       break;
     

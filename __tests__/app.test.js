@@ -51,6 +51,48 @@ describe("NC News", () => {
           });
         });
     });
+
+    test('POST 201: Responds with status 201 and a new topic when topic successfully added.', () => {
+      return request(app)
+        .post('/api/topics')
+        .send({
+          slug: 'dodgy-site',
+          description: 'Buy stuff at www.dodgy-site.com'
+        })
+        expect(201)
+        then(({ body: { topic } }) => {
+          expect(topic.slug).toBe('dodgy-site');
+          expect(topic.description).toBe('Buy stuff at www.dodgy-site.com');
+          expect(Object.keys(topic)).toHaveLength(2);
+        });
+    });
+
+    test('POST 400: Responds with status 400 when attempting to post a topic with an existing slug.', () => {
+      return request(app)
+        .post('/api/topics')
+        .send({
+          slug: 'mitch',
+          description: 'Buy stuff at www.dodgy-site.com'
+        })
+        expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('POST 400: Responds with 400 when posted topic is invalid.', () => {
+      return request(app)
+        .post('/api/topics')
+        .send({
+          slug: 'dodgy-site',
+          description: 'Buy stuff at www.dodgy-site.com',
+          colour: 'institution green'
+        })
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
   });
 
   describe('/api/articles/:article_id', () => {
@@ -248,8 +290,194 @@ describe("NC News", () => {
         .get('/api/articles?topic=dogs')
         .expect(404)
         .then(({ body: { msg } }) => {
-          expect(msg).toBe("Topic not found");
+          expect(msg).toBe("No such topic");
         });
+    });
+
+    test('GET 200: When given a page specifier, paginate the page accordingly.', () => {
+      return request(app)
+        .get('/api/articles?p=1')
+        .expect(200)
+        .then(({ body: { articles, total_count } }) => {
+          expect(articles).toHaveLength(10);
+          expect(total_count).toBe(13);
+        });
+    });
+
+    test('GET 200: When paginating, return the total of filtered articles.', () => {
+      return request(app)
+        .get('/api/articles?p=1&topic=mitch')
+        .expect(200)
+        .then(({ body: { articles, total_count } }) => {
+          expect(articles).toHaveLength(10);
+          expect(total_count).toBe(12);
+        });
+    });
+
+    test('GET 200: When paginating, reduce the number of articles returned to a maximum of the limit value.', () => {
+      return request(app)
+        .get('/api/articles?p=1&limit=4')
+        .expect(200)
+        .then(({ body: { articles, total_count } }) => {
+          expect(articles).toHaveLength(4);
+          expect(total_count).toBe(13);
+        });
+    });
+
+    test('GET 200: When paginating, return results from the correct page.', () => {
+      return request(app)
+        .get('/api/articles?p=2&limit=4&sort_by=article_id&order=asc')
+        .expect(200)
+        .then(({ body: { articles, total_count } }) => {
+          expect(articles).toHaveLength(4);
+          expect(articles[0].article_id).toBe(5);
+          expect(articles[3].article_id).toBe(8);
+        });
+    });
+
+    test('GET 200: When paginating, the final page may not be full.', () => {
+      return request(app)
+        .get('/api/articles?p=4&limit=4')
+        .expect(200)
+        .then(({ body: { articles, total_count } }) => {
+          expect(articles).toHaveLength(1);
+        });
+    });
+
+    test('GET 200: When paginating, pages beyond the last page should be empty.', () => {
+      return request(app)
+        .get('/api/articles?p=999&limit=4')
+        .expect(200)
+        .then(({ body: { articles, total_count } }) => {
+          expect(articles).toHaveLength(0);
+        });
+    });
+
+    test('GET 200: Paginating should work when filtering by topic.', () => {
+      return request(app)
+        .get('/api/articles?p=2&limit=3&topic=mitch&sort_by=article_id&order=asc')
+        .expect(200)
+        .then(({ body: { articles, total_count } }) => {
+          expect(articles).toHaveLength(3);
+          expect(articles[0].article_id).toBe(4);
+          expect(articles[1].article_id).toBe(6);
+          expect(articles[2].article_id).toBe(7);
+        });
+    });
+
+    test('POST 201: Responds with status 201 and new article when article successfully added.', () => {
+      const url = 'https://secureblitz.com/wp-content/uploads/2020/02/Most-Dangerous-Websites-You-Should-Avoid.png'
+      return request(app)
+        .post('/api/articles')
+        .send({
+          author: 'lurker',
+          title: 'Why you should buy stuff from www.dodgy-site.com',
+          body: 'Buy stuff at https://dodgy-site.com',
+          topic: 'paper',
+          article_img_url: url
+        })
+        .expect(201)
+        .then(({ body: { article } }) => {
+            expect(article.article_id).toBe(14);
+            expect(article.author).toBe('lurker');
+            expect(article.title).toBe('Why you should buy stuff from www.dodgy-site.com');
+            expect(article.body).toBe('Buy stuff at https://dodgy-site.com');
+            expect(article.topic).toBe('paper');
+            expect(article.article_img_url).toBe(url);
+            expect(article.votes).toBe(0);
+            expect(article.comment_count).toBe(0);
+            
+            expect(typeof article.created_at).toBe('string');
+        });
+    });
+
+    test('POST 201: Uses default article_img_url if one is not provided.', () => {
+      const url = 'https://images.pexels.com/photos/97050/pexels-photo-97050.jpeg?w=700&h=700';
+      return request(app)
+        .post('/api/articles')
+        .send({
+          author: 'lurker',
+          title: 'Why you should buy stuff from www.dodgy-site.com',
+          body: 'Buy stuff at https://dodgy-site.com',
+          topic: 'paper',
+        })
+        .expect(201)
+        .then(({ body: { article } }) => {
+            expect(article.article_img_url).toBe(url);
+        });
+    });
+
+    test('POST 404: Responds with 404 if referenced author does not exist in users.', () => {
+      return request(app)
+        .post('/api/articles')
+        .send({
+          author: 'Honest Ron',
+          title: 'Why you should buy stuff from www.dodgy-site.com',
+          body: 'Buy stuff at https://dodgy-site.com',
+          topic: 'paper',
+        })
+        .expect(404)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("No such user");
+        });
+    });
+
+    test('POST 404: Responds with 404 if referenced topic does not exist in topics.', () => {
+      return request(app)
+        .post('/api/articles')
+        .send({
+          author: 'lurker',
+          title: 'Why you should buy stuff from www.dodgy-site.com',
+          body: 'Buy stuff at https://dodgy-site.com',
+          topic: 'dodgy-site',
+        })
+        .expect(404)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("No such topic");
+        });
+    });
+
+    test('POST 400: Responds with 400 when posted article is invalid.', () => {
+      return request(app)
+        .post('/api/articles')
+        .send({
+          author: 'lurker',
+          title: 'Why you should buy stuff from www.dodgy-site.com',
+          body: 'Buy stuff at https://dodgy-site.com',
+          colour: 'institution green'
+        })
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('DELETE 204: Successfully deletes an article.', () => {
+      return request(app)
+        .delete('/api/articles/1')
+        .expect(204)
+        .then(() => {
+          return request(app)
+            .get('/api/articles/1')
+            .expect(404)
+            .then(({ body: { msg } }) => {
+              expect(msg).toBe("No such article");
+            });
+        })
+    });
+
+    test('DELETE 204: Successfully removes associated comments when an article is deleted.', () => {
+      return request(app)
+        .delete('/api/articles/1')
+        .expect(204)
+        .then(() => {
+          return request(app)
+            .delete('/api/comments/2')
+            .expect(404)
+            .then(({ body: { msg } }) => {
+              expect(msg).toBe("No such comment");
+            });
+        })
     });
   });
 
@@ -394,6 +622,71 @@ describe("NC News", () => {
           expect(msg).toBe("Bad request");
         });
     });
+
+    test('GET 200: When given a page specifier, paginate the page accordingly.', () => {
+      return request(app)
+        .get('/api/articles/1/comments?p=1')
+        .expect(200)
+        .then(({ body: { comments } }) => {
+          expect(comments).toHaveLength(10);
+        });
+    });
+
+    test('GET 200: When given a page specifier and an article with no comments, return an empty list.', () => {
+      return request(app)
+        .get('/api/articles/2/comments?p=1')
+        .expect(200)
+        .then(({ body: { comments } }) => {
+          expect(comments).toHaveLength(0);
+        });
+    });
+
+    test('GET 200: When paginating, reduce the number of comments returned to a maximum of the limit value.', () => {
+      return request(app)
+        .get('/api/articles/1/comments?p=1&limit=4')
+        .expect(200)
+        .then(({ body: { comments } }) => {
+          expect(comments).toHaveLength(4);
+        });
+    });
+
+    test('GET 200: When paginating, return results from the correct page.', () => {
+      return request(app)
+        .get('/api/articles/1/comments?p=2&limit=4')
+        .expect(200)
+        .then(({ body: { comments, total_count } }) => {
+          expect(comments).toHaveLength(4);
+          expect(comments[0].comment_id).toBe(7);
+          expect(comments[3].comment_id).toBe(12);
+        });
+    });
+
+    test('GET 200: When paginating, the final page may not be full.', () => {
+      return request(app)
+        .get('/api/articles/1/comments?p=3&limit=4')
+        .expect(200)
+        .then(({ body: { comments } }) => {
+          expect(comments).toHaveLength(3);
+        });
+    });
+
+    test('GET 200: When paginating, pages beyond the last page should be empty.', () => {
+      return request(app)
+        .get('/api/articles/1/comments?p=999')
+        .expect(200)
+        .then(({ body: { comments } }) => {
+          expect(comments).toHaveLength(0);
+        });
+    });
+
+    test('GET 404: Responds with status 404 when paginating but the article does not exist.', () => {
+      return request(app)
+        .get('/api/articles/999/comments?p1')
+        .expect(404)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("No such article");
+        });
+    });
   });
 
   describe('/api/comments/:comment_id', () => {
@@ -437,6 +730,77 @@ describe("NC News", () => {
           expect(msg).toBe("Bad request");
         });
     });
+
+    test('PATCH 200: Updates the votes associated with a specified comment and returns the comment.', () => {
+      return request(app)
+        .patch('/api/comments/1')
+        .send({
+          inc_votes: 1
+        })
+        .expect(200)
+        .then(({ body: { comment } }) => {
+          expect(comment.votes).toBe(17);
+        });
+    });
+
+    test('PATCH 404: Responds with 404 when there is no comment with the specified id.', () => {
+      return request(app)
+        .patch('/api/comments/999')
+        .send({
+          inc_votes: 42
+        })
+        .expect(404)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("No such comment");
+        });
+    });
+
+    test('PATCH 400: Responds with 400 when the comment_id is invalid.', () => {
+      return request(app)
+        .patch('/api/comments/not-a-number')
+        .send({
+          inc_votes: 42
+        })
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('PATCH 400: Responds with 400 when the inc_votes key is missing.', () => {
+      return request(app)
+        .patch('/api/comments/1')
+        .send({})
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('PATCH 400: Responds with 400 when the inc_votes value is invalid.', () => {
+      return request(app)
+        .patch('/api/comments/1')
+        .send({
+          incVotes: "not-a-number"
+        })
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
+
+    test('PATCH 400: Responds with 400 when the patch data has extra keys.', () => {
+      return request(app)
+        .patch('/api/comments/1')
+        .send({
+          inc_votes: 42,
+          colour: "institution green"
+        })
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("Bad request");
+        });
+    });
   });
 
   describe('/api/users', () => {
@@ -454,6 +818,26 @@ describe("NC News", () => {
             expect(typeof user.name).toBe('string');
             expect(typeof user.avatar_url).toBe('string');
           });
+        });
+    });
+
+    test('GET 200: Responds with a user.', () => {
+      return request(app)
+        .get('/api/users/rogersop')
+        .expect(200)
+        .then(({ body: { user } }) => {
+          expect(user.username).toBe('rogersop');
+          expect(user.name).toBe('paul');
+          expect(typeof user.avatar_url).toBe('string');
+        });
+    });
+
+    test('GET 404: Responds with status 404 when referenced username does not exist.', () => {
+      return request(app)
+        .get('/api/users/honest-ron')
+        .expect(404)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe("No such username");
         });
     });
   });

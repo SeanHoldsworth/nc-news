@@ -9,9 +9,24 @@
       "topics": [{ "slug": "football", "description": "Footie!" }]
     }
   },
+  "POST /api/topics": {
+    "description": "creates a new topic and returns the newly created article",
+    "postData": {
+      "slug": "politics",
+      "description": "National and world news"
+    },
+    "exampleResponse": {
+      "topic": [
+        {
+        "slug": "politics",
+        "description": "National and world news"
+        }
+      ]
+    }
+  },
   "GET /api/articles": {
-    "description": "serves an array of all articles sorted by default with newest first",
-    "queries": ["author", "topic", "sort_by", "order"],
+    "description": "serves an optionally paginated and filtered array of articles sorted by default with newest first",
+    "queries": ["author", "topic", "sort_by", "order", "p", "limit"],
     "exampleResponse": {
       "articles": [
         {
@@ -20,6 +35,30 @@
           "title": "Seafood substitutions are increasing",
           "topic": "cooking",
           "created_at": "2018-05-30T15:59:13.341Z",
+          "article_img_url": "https://images.pexels.com/photos/97050/pexels-photo-97050.jpeg?w=700&h=700",
+          "votes": 0,
+          "comment_count": 11
+        }
+      ]
+    }
+  },
+  "POST /api/articles": {
+    "description": "creates a new article and returns the newly created article",
+    "postData": {
+      "author": "weegembump",
+      "title": "Seafood substitutions are increasing",
+      "body": "Text from the article..",
+      "topic": "cooking"
+    },
+    "exampleResponse": {
+      "articles": [
+        {
+          "article_id": 1,
+          "author": "weegembump",
+          "title": "Seafood substitutions are increasing",
+          "topic": "cooking",
+          "created_at": "2018-05-30T15:59:13.341Z",
+          "article_img_url": "https://images.pexels.com/photos/97050/pexels-photo-97050.jpeg?w=700&h=700",
           "votes": 0,
           "comment_count": 11
         }
@@ -62,8 +101,8 @@
     }
   },
   "GET /api/articles/:article_id/comments": {
-    "description": "serves a list of comments on an article sorted newest comments first.",
-    "queries": ["author", "topic", "sort_by", "order"],
+    "description": "serves an optionally paginated list of comments on an article with newest comments first.",
+    "queries": ["author", "topic", "sort_by", "order", "p", "limit"],
     "exampleResponse": {
       "comments": [
         {
@@ -99,6 +138,23 @@
   "DELETE /api/comments/:comment_id": {
     "description": "removes a comment with the given comment_id."
   },
+  "PATCH /api/comments/:comment_id": {
+    "description": "Increments a specified comments's votes by a number specified in patch data",
+    "patchData": {
+      "inc_votes": 1
+    },
+    "exampleResponse": {
+      "comment":
+        {
+          "comment_id": 2,
+          "author": "butter bridge",
+          "body": "Text from the comment..",
+          "votes": 14,
+          "created_at": "2018-05-30T15:59:13.341Z",
+          "article_id": 1
+        }
+    }
+  },
   "GET /api/users": {
     "description": "serves an array of all users",
     "exampleResponse": {
@@ -109,6 +165,17 @@
           "avatar_url": "https://www.healthytherapies.com/wp-content/uploads/2016/06/Lime3.jpg"
         }
       ]
+    }
+  },
+  "GET /api/users/:username": {
+    "description": "returns a user matching the username.",
+    "exampleResponse": {
+      "user":
+        {
+          "username": "butter_bridge",
+          "name": "jonny",
+          "avatar_url": "https://www.healthytherapies.com/wp-content/uploads/2016/06/Lime3.jpg"
+        }
     }
   }
 }

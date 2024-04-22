@@ -19,3 +19,6 @@ exports.checkUsernameExists = (username) =>
 
 exports.checkCommentExists = (comment_id) =>
   checkExists('comments', 'comment_id', comment_id, 404, "No such comment");
+
+exports.checkTopicExists = (slug) =>
+  checkExists('topics', 'slug', slug, 404, "No such topic");

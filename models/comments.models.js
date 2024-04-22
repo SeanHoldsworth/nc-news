@@ -7,5 +7,18 @@ exports.deleteComment = (comment_id) => {
       if (rowCount === 0)
         return Promise.reject({ status: 404, msg: "No such comment" });
     })
+};
 
-}
+exports.updateCommentById = (comment_id, incVotes) => {
+  return db
+    .query(`
+      UPDATE comments SET votes = votes + $1
+        WHERE comment_id = $2 RETURNING *;`,
+        [incVotes, comment_id])
+    .then(({ rows: [comment] }) => {
+      if (comment) 
+        return comment;
+
+      return Promise.reject({ status: 404, msg: "No such comment" });
+    });
+};
